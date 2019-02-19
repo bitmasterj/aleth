@@ -231,10 +231,19 @@ void NodeTable::doDiscover(NodeID _node, unsigned _round, shared_ptr<set<shared_
     m_timers.schedule(c_reqTimeout.count() * 2, [this, _node, _round, _tried](boost::system::error_code const& _ec)
     {
         if (_ec)
+        {
             // we can't use m_logger here, because captured this might be already destroyed
             clog(VerbosityDebug, "discov")
                 << "Discovery timer was probably cancelled: " << _ec.value() << " "
                 << _ec.message();
+
+            clog(VerbosityDebug, "discov") << "Timer status: " << m_timers.isStopped();
+            clog(VerbosityDebug, "discov") << "Round: " << _round;
+
+            // Failfast
+            int* dbgPtr = nullptr;
+            *dbgPtr = 5;
+        }
 
         if (_ec.value() == boost::asio::error::operation_aborted || m_timers.isStopped())
             return;
@@ -463,7 +472,7 @@ void NodeTable::onPacketReceived(
                 }
 
                 auto const sourceNodeEntry = nodeEntry(sourceId);
-                assert(sourceNodeEntry);
+                //assert(sourceNodeEntry);
                 sourceNodeEntry->lastPongReceivedTime = RLPXDatagramFace::secondsSinceEpoch();
 
                 // Valid PONG received, so we don't want to evict this node,
